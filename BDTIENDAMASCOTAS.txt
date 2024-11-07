@@ -1,0 +1,260 @@
+DROP DATABASE IF EXISTS BDTIENDAMASCOTAS;
+create database BDTIENDAMASCOTAS;
+use BDTIENDAMASCOTAS;
+create table Cliente(
+Cli_code char(5) primary key,
+Cli_nombre varchar(30),
+Cli_dni int,
+Cli_contraseña varchar(15)
+);
+
+use BDTIENDAMASCOTAS;
+create table Empleado(
+Emp_code char(5) primary key,
+Emp_nombre varchar(30),
+Emp_dni int,
+Emp_contraseña varchar(15)
+);
+
+use BDTIENDAMASCOTAS;
+create table Producto(
+Pro_code char(5) primary key,
+Pro_nombre varchar(50),
+Pro_precio numeric(8,2),
+Pro_stock int,
+Pro_marca varchar(30),
+Pro_animal varchar(20)
+);
+
+
+use BDTIENDAMASCOTAS;
+create table Fac_cabe(
+Fac_num char(5) primary key, 
+Fac_fec date,
+Cli_code char(5)
+);
+
+use BDTIENDAMASCOTAS;
+create table Fac_deta(
+Fac_num char(5), 
+cantidad int,
+Pro_code char(5),
+primary key (Fac_num, Pro_code),
+foreign KEY (Fac_num) references Fac_cabe(Fac_num),
+foreign KEY (Pro_code) references Producto(Pro_code)
+);
+
+USE BDTIENDAMASCOTAS;
+CREATE TABLE TipoAlimento(
+Ali_code char(5) PRIMARY KEY,
+Ali_nom varchar(25),
+Pro_code char(5)
+);
+
+USE BDTIENDAMASCOTAS;
+CREATE TABLE TipoHigiene(
+Hig_code char(5) PRIMARY key,
+Hig_nom varchar(25),
+Pro_code char(5)
+);
+
+USE BDTIENDAMASCOTAS;
+CREATE TABLE TipoOtros(
+otro_code char(5) PRIMARY KEY,
+Otro_nom varchar(25),
+Pro_code char(5)
+);
+
+use BDTIENDAMASCOTAS;
+create table Cambios(
+Emp_code char(5),
+Pro_code char(5),
+Camb_fec date,
+PRIMARY KEY (Emp_code, Pro_code),
+FOREIGN key (Emp_code) references empleado(Emp_code),
+FOREIGN key (Pro_code) references producto(Pro_code)  
+);
+
+
+use BDTIENDAMASCOTAS;
+alter table Fac_cabe add constraint FacCabe_Cli
+foreign key (Cli_code) references Cliente(Cli_code);
+
+use BDTIENDAMASCOTAS;
+alter table TipoAlimento add constraint Ali_Pro
+foreign key (Pro_code) references Producto(Pro_code);
+
+use BDTIENDAMASCOTAS;
+alter table TipoHigiene add constraint Hig_Pro
+foreign key (Pro_code) references Producto(Pro_code);
+
+use BDTIENDAMASCOTAS;
+alter table TipoOtros add constraint Otro_Pro
+foreign key (Pro_code) references Producto(Pro_code);
+
+use bdtiendamascotas;
+drop procedure if EXISTS adifac;
+DELIMITER @@
+CREATE PROCEDURE adifac
+(codc char(5))
+BEGIN
+DECLARE CUENTA INT;
+DECLARE FAC CHAR(5);
+SELECT RIGHT(MAX(Fac_num),4)+1 into CUENTA FROM fac_cabe;
+SET FAC = CONCAT('F',lpad(CUENTA,4,'0'));
+INSERT INTO fac_cabe VALUES (FAC, CURRENT_DATE(), codc);
+SELECT FAC;
+end @@
+DELIMITER ;
+
+use bdtiendamascotas;
+drop procedure if EXISTS adideta;
+DELIMITER @@
+CREATE PROCEDURE adideta
+(fac char(5), codp char(5), cant int)
+BEGIN
+INSERT INTO fac_deta values(fac,cant,codp);
+update producto set Pro_stock = Pro_stock- cant
+where Pro_code = codp;
+end @@
+DELIMITER ;
+
+use bdtiendamascotas;
+drop procedure if EXISTS adicli;
+DELIMITER @@
+CREATE PROCEDURE adicli
+(nomb varchar(30),dni int, contra varchar(15))
+BEGIN
+DECLARE CUENTA INT;
+DECLARE clic CHAR(5);
+SELECT RIGHT(MAX(Cli_code),4)+1 into CUENTA FROM cliente;
+SET clic = CONCAT('C',lpad(CUENTA,4,'0'));
+INSERT INTO Empleado VALUES (clic,nomb,dni,contra);
+SELECT clic;
+end @@
+DELIMITER ;
+
+use bdtiendamascotas;
+drop procedure if EXISTS adiemp;
+DELIMITER @@
+CREATE PROCEDURE adiemp
+(nomb varchar(30),dni int, contra varchar(15))
+BEGIN
+DECLARE CUENTA INT;
+DECLARE empc CHAR(5);
+SELECT RIGHT(MAX(Emp_code),4)+1 into CUENTA FROM empleado;
+SET empc = CONCAT('E',lpad(CUENTA,4,'0'));
+INSERT INTO Cliente VALUES (empc,nomb,dni,contra);
+SELECT empc;
+end @@
+DELIMITER ;
+
+use bdtiendamascotas;
+drop procedure if EXISTS adipro;
+DELIMITER @@
+CREATE PROCEDURE adipro
+(nomb varchar(30),pre numeric(8,2), stock int, marc varchar(30), animal varchar(20))
+BEGIN
+DECLARE CUENTA INT;
+DECLARE proc CHAR(5);
+SELECT RIGHT(MAX(Pro_code),4)+1 into CUENTA FROM producto;
+SET proc = CONCAT('P',lpad(CUENTA,4,'0'));
+INSERT INTO producto VALUES (proc, nomb, pre, stock, marc, animal);
+SELECT proc;
+end @@
+DELIMITER ;
+
+
+use bdtiendamascotas;
+drop procedure if EXISTS adiali;
+DELIMITER @@
+CREATE PROCEDURE adiali
+(nomb varchar(30), cod char(5))
+BEGIN
+DECLARE CUENTA INT;
+DECLARE alic CHAR(5);
+SELECT RIGHT(MAX(Ali_code),4)+1 into CUENTA FROM tipoalimento;
+SET alic = CONCAT('A',lpad(CUENTA,4,'0'));
+INSERT INTO tipoalimento VALUES (alic, nomb, cod);
+end @@
+DELIMITER ;
+
+use bdtiendamascotas;
+drop procedure if EXISTS adihig;
+DELIMITER @@
+CREATE PROCEDURE adihig
+(nomb varchar(30), cod char(5))
+BEGIN
+DECLARE CUENTA INT;
+DECLARE higc CHAR(5);
+SELECT RIGHT(MAX(Hig_code),4)+1 into CUENTA FROM tipohigiene;
+SET higc = CONCAT('H',lpad(CUENTA,4,'0'));
+INSERT INTO tipohigiene VALUES (higc, nomb, cod);
+end @@
+DELIMITER ;
+
+
+use bdtiendamascotas;
+drop procedure if EXISTS adiotr;
+DELIMITER @@
+CREATE PROCEDURE adiotr
+(nomb varchar(30), cod char(5))
+BEGIN
+DECLARE CUENTA INT;
+DECLARE otrc CHAR(5);
+SELECT RIGHT(MAX(otro_code),4)+1 into CUENTA FROM tipootros;
+SET otrc = CONCAT('O',lpad(CUENTA,4,'0'));
+INSERT INTO tipootros VALUES (otrc, nomb, cod);
+end @@
+DELIMITER ;
+
+USE bdtiendamascotas
+DROP PROCEDURE IF EXISTS Fregistro
+DELIMITER @@
+CREATE PROCEDURE regfac
+(code char(5)) 
+BEGIN
+SELECT fac_cabe.Fac_num, Fac_fec, (producto.Pro_precio * fac_deta.cantidad) Total
+FROM fac_cabe join fac_deta on fac_cabe.Fac_num = fac_deta.Fac_num join producto on producto.Pro_code = fac_deta.Pro_code
+WHERE Cli_code = code;
+END @@
+DELIMITER ;
+
+USE bdtiendamascotas
+DROP PROCEDURE IF EXISTS CambiarPro
+DELIMITER @@
+CREATE PROCEDURE CambiarPro
+(codes char(5), nomb varchar(50), precio numeric(8,2), stock int, anim varchar(20)) 
+BEGIN
+UPDATE producto set Pro_nombre = nomb, Pro_precio = precio, Pro_stock = stock, Pro_animal = anim where Pro_code = codes;
+END @@
+DELIMITER ;
+
+use bdtiendamascotas;
+drop procedure if EXISTS adiCamb;
+DELIMITER @@
+CREATE PROCEDURE adiCamb
+(codp char(5), codem char(5))
+BEGIN
+INSERT INTO cambios VALUES (codem,codp, CURRENT_DATE());
+end @@
+DELIMITER ;
+
+
+USE bdtiendamascotas
+DROP PROCEDURE IF EXISTS CambiarEmp
+DELIMITER @@
+CREATE PROCEDURE CambiarEmp
+(cod char(5),nomb varchar(30), dnii int, contras varchar(15)) 
+BEGIN
+UPDATE empleado set Emp_nombre = nomb, Emp_dni = dnii, Emp_contraseña = contras where Emp_code = cod;
+END @@
+DELIMITER ;
+
+
+insert into empleado values('E0001','Victor',321,'321');
+insert into cliente values('C0001','Victor',1234,'qwer');
+insert into producto values('P0001','Veterinary Intestinal (IN)',74,120,'EQUILIBRIO','Perro');
+insert into tipoalimento values('A0001', 'Alimento Seco', 'P0001');
+
+
